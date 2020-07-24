@@ -56,39 +56,24 @@ function renderLoop() {
 	context.fillRect(0,0,canvas.width,canvas.height);
 	
 	drawGrid();
-		
-	//Draw shadow
-	drawScriptShadow({type:"Set Camera",x:0,y:0,scale:{x:2,y:3}});
 	
 	//Draw script
 	drawScript({type:"Set Camera",x:0,y:0,scale:{x:2,y:3}});
-	
 	
 	requestAnimationFrame(renderLoop);
 }
 
 
-function drawScriptShadow(script) {
-	//Fade out shadow with zoom out
-	context.globalAlpha = 0.3 - ((24-Math.min(24,camera.scale))/24)*0.3;
-	
-	context.shadowBlur = 7;
-	context.shadowOffsetX = -camera.scale/8;
-	context.shadowOffsetY = camera.scale/8;
-	
-	//Draw rect with same color as background (fill operation is required for shadow draw and the shadow will use the fill's opacity)
-	context.fillStyle = colors.background;
-	context.shadowColor = "rgba(0,0,0,1)";
-	context.fillRect((script.x*camera.scale)+1+camera.x, (script.y*camera.scale)+1+camera.y, camera.scale*script.scale.x-2, camera.scale*script.scale.y-2);
-	
-	//A transparent shadow color disables shadow drawing
-	context.shadowColor = "rgba(0,0,0,0)";
-	context.globalAlpha = 1;
-}
-
 function drawScript(script) {
-	//Draw script
+	//Script image already cached
 	if (imageCache?.[script.type] !== undefined) {
+		//Fade out shadow with zoom out
+		context.shadowColor = "rgba(0,0,0," + (0.3 - ((24-Math.min(24,camera.scale))/24)*0.3) + ")";
+		
+		context.shadowBlur = 7;
+		context.shadowOffsetX = -camera.scale/8;
+		context.shadowOffsetY = camera.scale/8;
+	
 		context.drawImage(
 			imageCache[script.type],	//image
 			(script.x*camera.scale)+camera.x,
@@ -96,6 +81,9 @@ function drawScript(script) {
 			camera.scale*script.scale.x,
 			camera.scale*script.scale.y
 		);
+		
+		//A transparent shadow color disables shadow drawing
+		context.shadowColor = "rgba(0,0,0,0)";
 	} else {
 		imageCache[script.type] = new Image();
 		imageCache[script.type].src = "img/scripts/default/Set Camera.png";
