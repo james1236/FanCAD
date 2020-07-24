@@ -3,8 +3,16 @@ var context = canvas.getContext('2d');
 
 var mouse = {x:0,y:0}
 
-var image = new Image();
-image.src = "img/scripts/default/Set Camera.png";
+var imageCache = {};
+
+var colors = {
+	"vector": "#A6FF65",
+	"rotation": "#EE8A56",
+	"number": "#13D9F3",
+	"execute": "#F0E764",
+	
+	"background" : "#00B8FF",
+};
 
 var camera = {x:0, y:0, scale:64}
 
@@ -43,16 +51,101 @@ function renderLoop() {
 	
 	context.imageSmoothingEnabled = false;
 	
-	context.fillStyle = "#00B8FF";
+	//Draw background
+	context.fillStyle = colors.background;
 	context.fillRect(0,0,canvas.width,canvas.height);
 	
 	drawGrid();
+		
+	//Draw shadow
+	drawScriptShadow({type:"Set Camera",x:0,y:0,scale:{x:2,y:3}});
 	
-	try {
-		context.drawImage(image, 0+camera.x, 0+camera.y, camera.scale*2, camera.scale*3);
-	} catch (e) {}
+	//Draw script
+	drawScript({type:"Set Camera",x:0,y:0,scale:{x:2,y:3}});
+	
 	
 	requestAnimationFrame(renderLoop);
+}
+
+
+function drawScriptShadow(script) {
+	//Fade out shadow with zoom out
+	context.globalAlpha = 0.3 - ((24-Math.min(24,camera.scale))/24)*0.3;
+	
+	context.shadowBlur = 7;
+	context.shadowOffsetX = -camera.scale/8;
+	context.shadowOffsetY = camera.scale/8;
+	
+	//Draw rect with same color as background (fill operation is required for shadow draw and the shadow will use the fill's opacity)
+	context.fillStyle = colors.background;
+	context.shadowColor = "rgba(0,0,0,1)";
+	context.fillRect((script.x*camera.scale)+1+camera.x, (script.y*camera.scale)+1+camera.y, camera.scale*script.scale.x-2, camera.scale*script.scale.y-2);
+	
+	//A transparent shadow color disables shadow drawing
+	context.shadowColor = "rgba(0,0,0,0)";
+	context.globalAlpha = 1;
+}
+
+function drawScript(script) {
+	//Draw script
+	if (imageCache?.[script.type] !== undefined) {
+		context.drawImage(
+			imageCache[script.type],	//image
+			(script.x*camera.scale)+camera.x,
+			(script.y*camera.scale)+camera.y,
+			camera.scale*script.scale.x,
+			camera.scale*script.scale.y
+		);
+	} else {
+		imageCache[script.type] = new Image();
+		imageCache[script.type].src = "img/scripts/default/Set Camera.png";
+	}
+	
+	//Draw ports
+	if (defaultScriptProperties?.[script.type] !== undefined) {
+		for (port of defaultScriptProperties[script.type].ports) {
+			context.fillStyle = colors[port.type];
+
+			portX = (camera.scale*script.x)+(camera.scale*port.x)+camera.x;
+			portY = (camera.scale*script.y)+(camera.scale*port.y)+camera.y;
+			
+			switch (port.side) {
+				case "left":
+					context.fillRect(
+						portX-camera.scale/16,
+						portY+(camera.scale/2-camera.scale/8),
+						camera.scale/16,
+						camera.scale/4
+					);
+					break;				
+				case "right":
+					context.fillRect(
+						portX+camera.scale-camera.scale/8,
+						portY+(camera.scale/2-camera.scale/8),
+						camera.scale/16,
+						camera.scale/4
+					);
+					break;
+				case "up":
+					context.fillRect(
+						portX+(camera.scale/2-camera.scale/8),
+						portY+camera.scale/16,
+						camera.scale/4,
+						camera.scale/16
+					);
+					break;				
+				case "down":
+					context.fillRect(
+						portX+(camera.scale/2-camera.scale/8),
+						portY+camera.scale,
+						camera.scale/4,
+						camera.scale/16
+					);
+					break;
+			}
+		}
+	}
+	
 }
 
 function click(event) {
@@ -93,7 +186,6 @@ function zoom(out) {
 	oldScale = camera.scale;
 	if (out) {
 		camera.scale = Math.max(camera.scale-2,8);
-		
 	} else {
 		camera.scale = Math.min(camera.scale+2,256);
 	}
@@ -108,11 +200,6 @@ function zoom(out) {
 	camera.y *= zoomFactor;
 	camera.x += scw.x;
 	camera.y += scw.y;
-}
-
-
-function screenToWorld(x,y) {
-	//pass
 }
 
 function startDrag() {
