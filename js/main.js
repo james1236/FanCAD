@@ -96,6 +96,8 @@ function renderLoop() {
 	requestAnimationFrame(renderLoop);
 }
 
+context.font = `12px fancade`;
+context.fillText("t",0,0); //cache font
 requestAnimationFrame(renderLoop);
 
 
@@ -169,102 +171,202 @@ function drawScript(script) {
 			}
 		} else {
 			//Draw connection sheath
-			context.fillStyle = colors.sheath1;
+			max = 1;
+			if (script.selected && !Object.keys(port.connections).length) {
+				max = 2; //Draw a second sheath for an unconnected wire's tip
+			}
 			switch (port.side) {
 				case "left":
-					context.fillRect(
-						portX-camera.scale/8,
-						portY+(camera.scale/2-camera.scale/8)-camera.scale*0.0625,
-						camera.scale/8,
-						camera.scale*0.375
-					);
-					
-					context.fillStyle = colors.sheath2;
-					
-					context.fillRect(
-						portX-camera.scale/8,
-						portY+(camera.scale/2-camera.scale/8)-camera.scale*0.0625,
-						camera.scale/8,
-						camera.scale/8
-					);
+					//Extended Wire
+					if (max == 2) {
+						context.fillRect(
+							portX-camera.scale/8-(2*camera.scale/2)+camera.scale/2,
+							portY+(camera.scale/2-camera.scale/8)-camera.scale*0.0625+camera.scale/8,
+							camera.scale/2,
+							camera.scale/8
+						);
+						
+						//Tip
+						context.fillStyle = "#FFFFFF";
+						context.fillRect(
+							portX-camera.scale/8-(2*camera.scale/2)+camera.scale/3,
+							portY+(camera.scale/2-camera.scale/8)-camera.scale*0.0625+camera.scale/8,
+							camera.scale/6,
+							camera.scale/8
+						);
+					}
+				
+					//Sheaths
+					for (tip = 0; tip < max; tip++) {
+						context.fillStyle = colors.sheath1;
+						
+						context.fillRect(
+							portX-camera.scale/8-(tip*camera.scale/2),
+							portY+(camera.scale/2-camera.scale/8)-camera.scale*0.0625,
+							camera.scale/8,
+							camera.scale*0.375
+						);
+						
+						context.fillStyle = colors.sheath2;
+						
+						context.fillRect(
+							portX-camera.scale/8-(tip*camera.scale/2),
+							portY+(camera.scale/2-camera.scale/8)-camera.scale*0.0625,
+							camera.scale/8,
+							camera.scale/8
+						);
+					}
 					
 					//Label
-					if (script.selected) {
+					if (max == 2) {
 						context.textAlign = "right";
 						context.font = `${Math.round(camera.scale/3)}px fancade`;
-						context.fillText(port.label,portX-camera.scale/8-camera.scale/1.5,portY+(camera.scale/2-camera.scale/8)-camera.scale*0.0625+camera.scale/3.8);
+						context.fillText(port.label,portX-camera.scale/8-camera.scale/1.3,portY+(camera.scale/2-camera.scale/8)-camera.scale*0.0625+camera.scale/3.8);
 					}
 					break;				
 				case "right":
-					context.fillRect(
-						portX+camera.scale-camera.scale/8,
-						portY+(camera.scale/2-camera.scale/8)-camera.scale*0.0625,
-						camera.scale/8,
-						camera.scale*0.375
-					);
-					
-					context.fillStyle = colors.sheath2;
-					
-					context.fillRect(
-						portX+camera.scale-camera.scale/8,
-						portY+(camera.scale/2-camera.scale/8)-camera.scale*0.0625,
-						camera.scale/8,
-						camera.scale/8
-					);
+					//Extended Wire
+					if (max == 2) {
+						context.fillRect(
+							portX+camera.scale-camera.scale/8+(2*camera.scale/2)-camera.scale,
+							portY+(camera.scale/2-camera.scale/8)-camera.scale*0.0625+camera.scale/8,
+							camera.scale/2,
+							camera.scale/8
+						);
+						
+						//Tip
+						context.fillStyle = "#FFFFFF";
+						context.fillRect(
+							portX+camera.scale-camera.scale/8+(2*camera.scale/2)-camera.scale+camera.scale/1.625,
+							portY+(camera.scale/2-camera.scale/8)-camera.scale*0.0625+camera.scale/8,
+							camera.scale/6,
+							camera.scale/8
+						);
+					}
+				
+					//Sheaths
+					for (tip = 0; tip < max; tip++) {
+						context.fillStyle = colors.sheath1;
+						
+						context.fillRect(
+							portX+camera.scale-camera.scale/8+(tip*camera.scale/2),
+							portY+(camera.scale/2-camera.scale/8)-camera.scale*0.0625,
+							camera.scale/8,
+							camera.scale*0.375
+						);
+						
+						context.fillStyle = colors.sheath2;
+						
+						context.fillRect(
+							portX+camera.scale-camera.scale/8+(tip*camera.scale/2),
+							portY+(camera.scale/2-camera.scale/8)-camera.scale*0.0625,
+							camera.scale/8,
+							camera.scale/8
+						);
+					}
 					
 					//Label
-					if (script.selected) {
+					if (max == 2) {
 						context.textAlign = "left";
 						context.font = `${Math.round(camera.scale/3)}px fancade`;
 						context.fillText(port.label,portX-camera.scale/8+camera.scale*2,portY+(camera.scale/2-camera.scale/8)-camera.scale*0.0625+camera.scale/3.8);
 					}
 					break;
 				case "up":
-					context.fillRect(
-						portX+(camera.scale/2-camera.scale/8)-camera.scale*0.0625,
-						portY,
-						camera.scale*0.375,
-						camera.scale/8
-					);
+					//Extended Wire
+					if (max == 2) {
+						context.fillRect(
+							portX+(camera.scale/2-camera.scale/8)-camera.scale*0.0625+camera.scale/8,
+							portY-(2*camera.scale/2)+camera.scale/2,
+							camera.scale/8,
+							camera.scale/2
+						);
+						
+						//Tip
+						context.fillStyle = "#FFFFFF";
+						context.fillRect(
+							portX+(camera.scale/2-camera.scale/8)-camera.scale*0.0625+camera.scale/8,
+							portY-(2*camera.scale/2)+camera.scale/2-camera.scale/6,
+							camera.scale/8,
+							camera.scale/6
+						);
+					}
 					
-					context.fillStyle = colors.sheath2;
 					
-					context.fillRect(
-						portX+(camera.scale/2-camera.scale/8)-camera.scale*0.0625+camera.scale/4,
-						portY,
-						camera.scale/8,
-						camera.scale/8
-					);
+					//Sheaths
+					for (tip = 0; tip < max; tip++) {
+						context.fillStyle = colors.sheath1;
+						
+						context.fillRect(
+							portX+(camera.scale/2-camera.scale/8)-camera.scale*0.0625,
+							portY-(tip*camera.scale/2),
+							camera.scale*0.375,
+							camera.scale/8
+						);
+						
+						context.fillStyle = colors.sheath2;
+						
+						context.fillRect(
+							portX+(camera.scale/2-camera.scale/8)-camera.scale*0.0625+camera.scale/4,
+							portY-(tip*camera.scale/2),
+							camera.scale/8,
+							camera.scale/8
+						);
+					}
 					
 					//Label
-					if (script.selected) {
+					if (max == 2) {
 						context.textAlign = "center";
 						context.font = `${Math.round(camera.scale/3)}px fancade`;
 						context.fillText(port.label,portX+camera.scale/2,portY+(camera.scale/2-camera.scale/8)-camera.scale*0.0625-camera.scale*1.15);
 					}
 					break;				
 				case "down":
-					context.fillRect(
-						portX+(camera.scale/2-camera.scale/8)-camera.scale*0.0625,
-						portY+camera.scale,
-						camera.scale*0.375,
-						camera.scale/8
-					);
-					
-					context.fillStyle = colors.sheath2;
-					
-					context.fillRect(
-						portX+(camera.scale/2-camera.scale/8)-camera.scale*0.0625+camera.scale/4,
-						portY+camera.scale,
-						camera.scale/8,
-						camera.scale/8
-					);
+					//Extended Wire
+					if (max == 2) {
+						context.fillRect(
+							portX+(camera.scale/2-camera.scale/8)-camera.scale*0.0625+camera.scale/8,
+							portY+camera.scale+(2*camera.scale/2)-camera.scale,
+							camera.scale/8,
+							camera.scale/2
+						);
+				
+						//Tip
+						context.fillStyle = "#FFFFFF";
+						context.fillRect(
+							portX+(camera.scale/2-camera.scale/8)-camera.scale*0.0625+camera.scale/8,
+							portY+camera.scale+(2*camera.scale/2)-camera.scale+camera.scale/1.625,
+							camera.scale/8,
+							camera.scale/6
+						);
+					}
+				
+					//Sheaths
+					for (tip = 0; tip < max; tip++) {
+						context.fillStyle = colors.sheath1;
+						
+						context.fillRect(
+							portX+(camera.scale/2-camera.scale/8)-camera.scale*0.0625,
+							portY+camera.scale+(tip*camera.scale/2),
+							camera.scale*0.375,
+							camera.scale/8
+						);
+						
+						context.fillStyle = colors.sheath2;
+						
+						context.fillRect(
+							portX+(camera.scale/2-camera.scale/8)-camera.scale*0.0625+camera.scale/4,
+							portY+camera.scale+(tip*camera.scale/2),
+							camera.scale/8,
+							camera.scale/8
+						);
+					}
 					
 					//Label
-					if (script.selected) {
+					if (max == 2) {
 						context.textAlign = "center";
 						context.font = `${Math.round(camera.scale/3)}px fancade`;
-						context.fillText(port.label,portX+camera.scale/2,portY+(camera.scale/2-camera.scale/8)-camera.scale*0.0625+camera.scale*1.75);
+						context.fillText(port.label,portX+camera.scale/2,portY+(camera.scale/2-camera.scale/8)-camera.scale*0.0625+camera.scale*1.835);
 					}
 					break;
 			}
@@ -279,6 +381,7 @@ function drawScript(script) {
 		context.globalAlpha = 1;
 	}
 	if (script.hover || script.selected) {
+		context.strokeStyle = "#FFFFFF";
 		context.lineWidth = Math.max(camera.scale/16,1);
 		context.strokeRect(
 			(script.x*camera.scale)+camera.x,

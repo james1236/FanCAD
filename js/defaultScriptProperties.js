@@ -21,6 +21,13 @@ var defaultScriptProperties = {
 				label: "Position"
 			},			
 			{
+				type: "vector",
+				side: "right",
+				x: 1,
+				y: 0,
+				label: "Test"
+			},			
+			{
 				type: "rotation",
 				side: "left",
 				x: 0,
