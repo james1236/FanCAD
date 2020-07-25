@@ -5,13 +5,44 @@ var mouse = {x:0,y:0}
 
 var imageCache = {};
 
+var project = {
+	world: {
+		scripts:{}
+	}
+}
+
+createScript("Set Camera",0,0);
+createScript("Set Camera",0,3);
+
+function createScript(type,x,y) {	
+	id = Math.random().toString(); //roughly 1 in one hundred quintillion chance of ID overlap :sweatsmile:
+	script = {
+		type:type,
+		x:x,
+		y:y,
+		scale: defaultScriptProperties?.[type]?.scale || {x:1,y:1},
+		ports: {}
+	};
+	
+	//Populating ports from template
+	for (port of defaultScriptProperties?.[type]?.ports || []) {
+		p = JSON.parse(JSON.stringify(port)); //dereferencing
+		p.connections = {};  //connections stored as {"scriptID":["portID"]}
+		script.ports[Math.random().toString()] = p;
+	}
+	
+	project.world.scripts[id] = script;
+}
+
 var colors = {
 	"vector": "#A6FF65",
 	"rotation": "#EE8A56",
 	"number": "#13D9F3",
 	"execute": "#F0E764",
+	"sheath1": "#D4E2EF",
+	"sheath2": "#FFFFFF",
 	
-	"background" : "#00B8FF",
+	"background" : "#00B8FF"
 };
 
 var camera = {x:0, y:0, scale:64}
@@ -58,7 +89,9 @@ function renderLoop() {
 	drawGrid();
 	
 	//Draw script
-	drawScript({type:"Set Camera",x:0,y:0,scale:{x:2,y:3}});
+	for (script in project.world.scripts) {
+		drawScript(project.world.scripts[script]);
+	}
 	
 	requestAnimationFrame(renderLoop);
 }
@@ -86,17 +119,18 @@ function drawScript(script) {
 		context.shadowColor = "rgba(0,0,0,0)";
 	} else {
 		imageCache[script.type] = new Image();
-		imageCache[script.type].src = "img/scripts/default/Set Camera.png";
+		imageCache[script.type].src = `img/scripts/default/${script.type}.png`;
 	}
 	
 	//Draw ports
-	if (defaultScriptProperties?.[script.type] !== undefined) {
-		for (port of defaultScriptProperties[script.type].ports) {
-			context.fillStyle = colors[port.type];
+	for (portID in script.ports) {
+		port = script.ports[portID]
+		context.fillStyle = colors[port.type];
 
-			portX = (camera.scale*script.x)+(camera.scale*port.x)+camera.x;
-			portY = (camera.scale*script.y)+(camera.scale*port.y)+camera.y;
-			
+		portX = (camera.scale*script.x)+(camera.scale*port.x)+camera.x;
+		portY = (camera.scale*script.y)+(camera.scale*port.y)+camera.y;
+		
+		if (!Object.keys(port.connections).length) {
 			switch (port.side) {
 				case "left":
 					context.fillRect(
@@ -131,9 +165,82 @@ function drawScript(script) {
 					);
 					break;
 			}
+		} else {
+			//Draw connection sheath
+			context.fillStyle = colors.sheath1;
+			switch (port.side) {
+				case "left":
+					context.fillRect(
+						portX-camera.scale/8,
+						portY+(camera.scale/2-camera.scale/8)-camera.scale*0.0625,
+						camera.scale/8,
+						camera.scale*0.375
+					);
+					
+					context.fillStyle = colors.sheath2;
+					
+					context.fillRect(
+						portX-camera.scale/8,
+						portY+(camera.scale/2-camera.scale/8)-camera.scale*0.0625,
+						camera.scale/8,
+						camera.scale/8
+					);
+					
+					break;				
+				case "right":
+					context.fillRect(
+						portX+camera.scale-camera.scale/8,
+						portY+(camera.scale/2-camera.scale/8)-camera.scale*0.0625,
+						camera.scale/8,
+						camera.scale*0.375
+					);
+					
+					context.fillStyle = colors.sheath2;
+					
+					context.fillRect(
+						portX+camera.scale-camera.scale/8,
+						portY+(camera.scale/2-camera.scale/8)-camera.scale*0.0625,
+						camera.scale/8,
+						camera.scale/8
+					);
+					break;
+				case "up":
+					context.fillRect(
+						portX+(camera.scale/2-camera.scale/8)-camera.scale*0.0625,
+						portY,
+						camera.scale*0.375,
+						camera.scale/8
+					);
+					
+					context.fillStyle = colors.sheath2;
+					
+					context.fillRect(
+						portX+(camera.scale/2-camera.scale/8)-camera.scale*0.0625+camera.scale/4,
+						portY,
+						camera.scale/8,
+						camera.scale/8
+					);
+					break;				
+				case "down":
+					context.fillRect(
+						portX+(camera.scale/2-camera.scale/8)-camera.scale*0.0625,
+						portY+camera.scale,
+						camera.scale*0.375,
+						camera.scale/8
+					);
+					
+					context.fillStyle = colors.sheath2;
+					
+					context.fillRect(
+						portX+(camera.scale/2-camera.scale/8)-camera.scale*0.0625+camera.scale/4,
+						portY+camera.scale,
+						camera.scale/8,
+						camera.scale/8
+					);
+					break;
+			}
 		}
 	}
-	
 }
 
 function click(event) {

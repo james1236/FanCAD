@@ -1,10 +1,22 @@
 var defaultScriptProperties = {
 	"Set Camera": {
+		scale:{
+			x:2,
+			y:3
+		},
+		
 		ports:[
 			{
 				type: "execute",
 				side: "up",
 				x: 0,
+				y: 0,
+				label: "Before"
+			},					
+			{
+				type: "execute",
+				side: "right",
+				x: 1,
 				y: 0,
 				label: "Before"
 			},				
