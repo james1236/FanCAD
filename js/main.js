@@ -96,6 +96,8 @@ function renderLoop() {
 	requestAnimationFrame(renderLoop);
 }
 
+requestAnimationFrame(renderLoop);
+
 
 function drawScript(script) {
 	//Script image already cached
@@ -130,7 +132,7 @@ function drawScript(script) {
 		portX = (camera.scale*script.x)+(camera.scale*port.x)+camera.x;
 		portY = (camera.scale*script.y)+(camera.scale*port.y)+camera.y;
 		
-		if (!Object.keys(port.connections).length) {
+		if (!Object.keys(port.connections).length && !script.selected) {
 			switch (port.side) {
 				case "left":
 					context.fillRect(
@@ -139,7 +141,7 @@ function drawScript(script) {
 						camera.scale/16,
 						camera.scale/4
 					);
-					break;				
+					break;
 				case "right":
 					context.fillRect(
 						portX+camera.scale-camera.scale/8,
@@ -186,6 +188,12 @@ function drawScript(script) {
 						camera.scale/8
 					);
 					
+					//Label
+					if (script.selected) {
+						context.textAlign = "right";
+						context.font = `${Math.round(camera.scale/3)}px fancade`;
+						context.fillText(port.label,portX-camera.scale/8-camera.scale/1.5,portY+(camera.scale/2-camera.scale/8)-camera.scale*0.0625+camera.scale/3.8);
+					}
 					break;				
 				case "right":
 					context.fillRect(
@@ -203,6 +211,13 @@ function drawScript(script) {
 						camera.scale/8,
 						camera.scale/8
 					);
+					
+					//Label
+					if (script.selected) {
+						context.textAlign = "left";
+						context.font = `${Math.round(camera.scale/3)}px fancade`;
+						context.fillText(port.label,portX-camera.scale/8+camera.scale*2,portY+(camera.scale/2-camera.scale/8)-camera.scale*0.0625+camera.scale/3.8);
+					}
 					break;
 				case "up":
 					context.fillRect(
@@ -220,6 +235,13 @@ function drawScript(script) {
 						camera.scale/8,
 						camera.scale/8
 					);
+					
+					//Label
+					if (script.selected) {
+						context.textAlign = "center";
+						context.font = `${Math.round(camera.scale/3)}px fancade`;
+						context.fillText(port.label,portX+camera.scale/2,portY+(camera.scale/2-camera.scale/8)-camera.scale*0.0625-camera.scale*1.15);
+					}
 					break;				
 				case "down":
 					context.fillRect(
@@ -237,17 +259,45 @@ function drawScript(script) {
 						camera.scale/8,
 						camera.scale/8
 					);
+					
+					//Label
+					if (script.selected) {
+						context.textAlign = "center";
+						context.font = `${Math.round(camera.scale/3)}px fancade`;
+						context.fillText(port.label,portX+camera.scale/2,portY+(camera.scale/2-camera.scale/8)-camera.scale*0.0625+camera.scale*1.75);
+					}
 					break;
 			}
 		}
 	}
+	
+	//Draw Selection
+	if (script.hover) {
+		context.globalAlpha = 0.5;
+	}
+	if (script.selected) {
+		context.globalAlpha = 1;
+	}
+	if (script.hover || script.selected) {
+		context.lineWidth = Math.max(camera.scale/16,1);
+		context.strokeRect(
+			(script.x*camera.scale)+camera.x,
+			(script.y*camera.scale)+camera.y,
+			camera.scale*script.scale.x,
+			camera.scale*script.scale.y
+		);
+		
+		context.globalAlpha = 1;
+	}
 }
 
 function click(event) {
+	event.preventDefault();
 	mouse.x = event.clientX;
 	mouse.y = event.clientY;
 	mouse.pressed = true;
 	startDrag();
+	mousemove(event);
 }
 
 function mousemove(event) {
@@ -258,6 +308,21 @@ function mousemove(event) {
 		camera.x = camera.x + (mouse.x - mouse.drag.x)*0.8;
 		camera.y = camera.y + (mouse.y - mouse.drag.y)*0.8;
 		mouse.drag = {x:mouse.x, y:mouse.y};
+	}
+	
+	//hover
+	for (script in project.world.scripts) {
+		script = project.world.scripts[script];
+		script.hover = false;
+		if (mouse.pressed) {
+			script.selected = false;
+		}
+		if (mouseInBox(script.x*camera.scale+camera.x,script.y*camera.scale+camera.y,script.scale.x*camera.scale,script.scale.y*camera.scale)) {
+			script.hover = true;
+			if (mouse.pressed) {
+				script.selected = true;
+			}
+		}
 	}
 }
 
@@ -304,5 +369,19 @@ function startDrag() {
 document.addEventListener("mousedown", click);
 document.addEventListener("mousemove", mousemove);
 document.addEventListener("mouseup", unclick);
+document.addEventListener('contextmenu', function (e) {e.preventDefault()}, false);
 
-requestAnimationFrame(renderLoop);
+function pointInBox(px,py,x,y,width,height) {
+	if (height == undefined) {
+		height = width;
+	}
+	
+	if (px > x && px < x+width && py > y && py < y+height) {
+		return true;
+	}
+	return false;
+}
+
+function mouseInBox(x,y,width,height) {
+	return pointInBox(mouse.x,mouse.y,x,y,width,height);
+}

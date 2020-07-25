@@ -12,14 +12,7 @@ var defaultScriptProperties = {
 				x: 0,
 				y: 0,
 				label: "Before"
-			},					
-			{
-				type: "execute",
-				side: "right",
-				x: 1,
-				y: 0,
-				label: "Before"
-			},				
+			},		
 			{
 				type: "vector",
 				side: "left",
