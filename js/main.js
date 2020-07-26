@@ -172,7 +172,7 @@ function drawScript(script) {
 		} else {
 			//Draw connection sheath
 			max = 1;
-			if (script.selected && !Object.keys(port.connections).length) {
+			if (script.selected && !Object.keys(port.connections).length && !(mouse.heldPort == portID)) {
 				max = 2; //Draw a second sheath for an unconnected wire's tip
 			}
 			switch (port.side) {
@@ -194,6 +194,13 @@ function drawScript(script) {
 							camera.scale/6,
 							camera.scale/8
 						);
+						
+						//Grab Circle
+						context.strokeStyle = "rgba(255,255,255,0.5)";
+						context.lineWidth =	3;
+						context.beginPath();
+						context.arc(portX-camera.scale/2.3, portY+camera.scale/2, 15, 0, 2 * Math.PI);
+						context.stroke();
 					}
 				
 					//Sheaths
@@ -242,6 +249,13 @@ function drawScript(script) {
 							camera.scale/6,
 							camera.scale/8
 						);
+						
+						//Grab Circle
+						context.strokeStyle = "rgba(255,255,255,0.5)";
+						context.lineWidth =	3;
+						context.beginPath();
+						context.arc(portX+camera.scale/2.3+camera.scale/1.15, portY+camera.scale/2, 15, 0, 2 * Math.PI);
+						context.stroke();
 					}
 				
 					//Sheaths
@@ -290,6 +304,13 @@ function drawScript(script) {
 							camera.scale/8,
 							camera.scale/6
 						);
+						
+						//Grab Circle
+						context.strokeStyle = "rgba(255,255,255,0.5)";
+						context.lineWidth =	3;
+						context.beginPath();
+						context.arc(portX+camera.scale/2, portY-camera.scale/3.2, 15, 0, 2 * Math.PI);
+						context.stroke();
 					}
 					
 					
@@ -339,6 +360,13 @@ function drawScript(script) {
 							camera.scale/8,
 							camera.scale/6
 						);
+						
+						//Grab Circle
+						context.strokeStyle = "rgba(255,255,255,0.5)";
+						context.lineWidth =	3;
+						context.beginPath();
+						context.arc(portX+camera.scale/2, portY+camera.scale*1.44, 15, 0, 2 * Math.PI);
+						context.stroke();
 					}
 				
 					//Sheaths
@@ -400,37 +428,63 @@ function click(event) {
 	mouse.y = event.clientY;
 	mouse.pressed = true;
 	startDrag();
-	mousemove(event);
+	
+	//Select grab circles
+	mouse.heldPort = mouseOverDragCircle();
+	if (mouse.heldPort) {
+		mouse.drag.disabled = true;
+		return;
+	}
+	
+	//Select script
+	mouse.selected = undefined;
+	for (scriptID in project.world.scripts) {
+		script = project.world.scripts[scriptID];
+		script.selected = false;
+		if (mouseInBox(script.x*camera.scale+camera.x,script.y*camera.scale+camera.y,script.scale.x*camera.scale,script.scale.y*camera.scale)) {
+			mouse.selected = scriptID;
+			script.selected = true;
+			mouse.drag.disabled = true;
+		}
+	}
 }
+
 
 function mousemove(event) {
 	mouse.x = event.clientX;
 	mouse.y = event.clientY;
 	
-	if (mouse.pressed) {
+	//Drag
+	if (mouse.pressed && !mouse.drag.disabled) {
 		camera.x = camera.x + (mouse.x - mouse.drag.x)*0.8;
 		camera.y = camera.y + (mouse.y - mouse.drag.y)*0.8;
 		mouse.drag = {x:mouse.x, y:mouse.y};
 	}
 	
-	//hover
-	for (script in project.world.scripts) {
-		script = project.world.scripts[script];
+	//Disable hover
+	for (scriptID in project.world.scripts) {
+		script = project.world.scripts[scriptID];
 		script.hover = false;
-		if (mouse.pressed) {
-			script.selected = false;
-		}
+	}
+	
+	//Drag circle blocking
+	 if (mouseOverDragCircle()) {
+		 return;
+	 }
+	
+	//Hover scripts
+	for (scriptID in project.world.scripts) {
+		script = project.world.scripts[scriptID];
 		if (mouseInBox(script.x*camera.scale+camera.x,script.y*camera.scale+camera.y,script.scale.x*camera.scale,script.scale.y*camera.scale)) {
 			script.hover = true;
-			if (mouse.pressed) {
-				script.selected = true;
-			}
 		}
 	}
 }
 
 function unclick(event) {
 	mouse.pressed = false;
+	mouse.drag.disabled = false;
+	mouse.heldPort = undefined;
 }
 
 document.onmousewheel = function(event) {
@@ -444,13 +498,66 @@ document.onmousewheel = function(event) {
 	zoom(!(delta > 0));
 }
 
+function mouseOverDragCircle() {
+	if (mouse.selected) {
+		portList = [];
+		distList = [];
+		script = project.world.scripts[mouse.selected];
+		
+		for (portID in script.ports) {
+			port = script.ports[portID];
+
+			//Unconnected port
+			if (!Object.keys(port.connections).length) {
+				portX = (camera.scale*script.x)+(camera.scale*port.x)+camera.x;
+				portY = (camera.scale*script.y)+(camera.scale*port.y)+camera.y;
+			
+				dist = 0;
+				switch (port.side) {
+					case "left":
+						dist = mouseDistance(portX-camera.scale/2.3, portY+camera.scale/2);
+						break;				
+					case "right":
+						dist = mouseDistance(portX+camera.scale/2.3+camera.scale/1.15, portY+camera.scale/2);
+						break;
+					case "up":
+						dist = mouseDistance(portX+camera.scale/2, portY-camera.scale/3.2);
+						break;				
+					case "down":
+						dist = mouseDistance(portX+camera.scale/2, portY+camera.scale*1.44);
+						break;
+				}
+				
+				if (dist < 15) {
+					portList.push(portID);
+					distList.push(dist);
+				}
+			} else {
+				//Connected port
+			}
+		}
+		
+		minIndex = 0;
+		for (i = 0; i < distList.length; i++) {
+			if (distList[i] < distList[minIndex]) {
+				minIndex = i;
+			}
+		}
+		
+		if (distList.length) {
+			return portList[minIndex];
+		}
+	}
+	return false;
+}
+
 
 function zoom(out) {
 	oldScale = camera.scale;
 	if (out) {
-		camera.scale = Math.max(camera.scale-2,8);
+		camera.scale = Math.max(camera.scale-(2*camera.scale/40),6);
 	} else {
-		camera.scale = Math.min(camera.scale+2,256);
+		camera.scale = Math.min(camera.scale+(2*camera.scale/40),256);
 	}
 	
 	//Zoom relative to mouse
@@ -487,4 +594,12 @@ function pointInBox(px,py,x,y,width,height) {
 
 function mouseInBox(x,y,width,height) {
 	return pointInBox(mouse.x,mouse.y,x,y,width,height);
+}
+
+function distance(x1,y1,x2,y2) {
+	return Math.hypot(x2 - x1, y2 - y1);
+}
+
+function mouseDistance(x,y) {
+	return distance(mouse.x, mouse.y, x, y);
 }
